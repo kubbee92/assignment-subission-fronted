@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignment Submission Portal</title>
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Three.js Library for 3D Statistical Graph Network -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #080911;
+      color: #ffffff;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* CYBERPUNK BACKGROUND ELEMENTS */
+
+    .cyber-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: 0;
+      pointer-events: none;
+      animation: gridDrift 40s linear infinite;
+    }
+    @keyframes gridDrift {
+      0% { background-position: 0 0; }
+      100% { background-position: 30px 30px; }
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      z-index: 0;
+      opacity: 0.35;
+      animation: floatOrb 12s infinite alternate ease-in-out;
+      pointer-events: none;
+    }
+    .orb-cyan { width: 280px; height: 280px; background: #00f0ff; top: -40px; left: -60px; }
+    .orb-pink { width: 320px; height: 320px; background: #ff007f; bottom: -60px; right: -60px; animation-duration: 16s; }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, 40px) scale(1.15); }
+    }
+
+    /* Floating statistical formulas background canvas */
+    #formulaCanvas {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Scattered observations canvas */
+    #dataCanvas {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+
+    /* Central pulsing DATA hub */
+    .data-hub {
+      position: fixed;
+      top: 0; left: 50%;
+      width: 100%; max-width: 480px; height: 100%;
+      transform: translateX(-50%);
+      z-index: 0;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .data-hub .spoke { stroke: rgba(0, 240, 255, 0.22); stroke-width: 1; fill: none; }
+    .data-hub .spoke.flow {
+      stroke: rgba(255, 0, 127, 0.35);
+      stroke-dasharray: 5 9;
+      animation: flowDash 4s linear infinite;
+    }
+    @keyframes flowDash { to { stroke-dashoffset: -140; } }
+    .data-hub .hub-ring-outer {
+      fill: none;
+      stroke: rgba(0, 240, 255, 0.4);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 5;
+      transform-origin: 200px 260px;
+      animation: rotateDashed 25s linear infinite;
+    }
+    @keyframes rotateDashed { to { transform: rotate(360deg); } }
+    .data-hub .hub-ring-pulse {
+      fill: rgba(0, 240, 255, 0.06);
+      stroke: rgba(0, 240, 255, 0.3);
+      stroke-width: 1;
+      transform-origin: 200px 260px;
+      animation: hubPulse 4s ease-in-out infinite;
+    }
+    @keyframes hubPulse {
+      0%, 100% { transform: scale(0.94); opacity: 0.8; }
+      50% { transform: scale(1.06); opacity: 0.35; }
+    }
+    .data-hub .hub-label {
+      fill: #ffffff;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+    }
+    .data-hub .node-ring {
+      fill: rgba(16, 18, 30, 0.8);
+      stroke: rgba(0, 240, 255, 0.5);
+      stroke-width: 1;
+    }
+    .data-hub .node-icon {
+      stroke: #00f0ff;
+      stroke-width: 1.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .data-hub .node-icon.pink { stroke: #ff007f; }
+    .data-hub .node-icon.purple { stroke: #9b6bff; }
+    .data-hub .node-icon.orange { stroke: #ff8a00; }
+    .data-hub .node {
+      animation: nodePulse 3.2s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes nodePulse {
+      0%, 100% { opacity: 0.65; }
+      50% { opacity: 1; }
+    }
+
+    /* Donut chart accent */
+    .donut-chart {
+      position: fixed;
+      top: 70px;
+      right: -18px;
+      width: 100px;
+      height: 100px;
+      z-index: 0;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .donut-chart .ring {
+      transform-origin: 50px 50px;
+      animation: donutSpin 9s linear infinite;
+    }
+    @keyframes donutSpin { to { transform: rotate(360deg); } }
+
+    /* Orange trend-line strip */
+    .trend-line {
+      position: fixed;
+      top: 100px; left: 0;
+      width: 100%; height: 70px;
+      z-index: 0;
+      opacity: 0.32;
+      pointer-events: none;
+    }
+    .trend-path {
+      stroke-dasharray: 6 6;
+      animation: flowDash 3.5s linear infinite;
+    }
+
+    /* Gauge meter */
+    .gauge {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      width: 110px;
+      height: 65px;
+      z-index: 0;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .gauge-needle {
+      transform-origin: 60px 65px;
+      animation: needleSweep 4.5s ease-in-out infinite;
+    }
+    @keyframes needleSweep {
+      0%, 100% { transform: rotate(-32deg); }
+      50% { transform: rotate(32deg); }
+    }
+
+    /* Waveform canvas */
+    .waveform-canvas {
+      position: fixed;
+      top: 190px; left: 0;
+      width: 100%; height: 46px;
+      z-index: 0;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* Concentric progress rings */
+    .rings-chart {
+      position: fixed;
+      top: 70px;
+      left: -18px;
+      width: 100px;
+      height: 100px;
+      z-index: 0;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .rings-chart circle.arc {
+      transform-origin: 50px 50px;
+      transition: stroke-dashoffset 1.2s ease-out;
+    }
+    .rings-chart .spin-slow {
+      animation: donutSpin 14s linear infinite;
+    }
+
+    /* Gradient bar chart strip */
+    .bar-strip {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding: 0 4px;
+      z-index: 0;
+      opacity: 0.28;
+      pointer-events: none;
+      -webkit-mask-image: linear-gradient(to top, black, transparent);
+      mask-image: linear-gradient(to top, black, transparent);
+    }
+    .bar-strip .bar {
+      flex: 1;
+      min-width: 2px;
+      border-radius: 2px 2px 0 0;
+      transform-origin: bottom;
+      animation-name: barMove;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+    }
+    @keyframes barMove {
+      0%, 100% { transform: scaleY(var(--h1)); }
+      50% { transform: scaleY(var(--h2)); }
+    }
+
+    .stat-badge {
+      position: absolute;
+      font-family: monospace;
+      font-size: 0.65rem;
+      color: rgba(0, 240, 255, 0.8);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: rgba(4, 12, 20, 0.85);
+      z-index: 2;
+      pointer-events: none;
+      letter-spacing: 1px;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+    .stat-1 { top: 20px; right: 20px; }
+    .stat-2 { bottom: 20px; left: 20px; }
+    .stat-1 span, .stat-2 span {
+      display: inline-block;
+      color: #00ff66;
+      font-weight: bold;
+      animation: blink 2.6s step-end infinite;
+    }
+    @keyframes blink { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0.25; } 100% { opacity: 1; } }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: riseIn 0.7s cubic-bezier(.2,.8,.2,1) 0.1s forwards;
+    }
+    @keyframes riseIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header { text-align: center; margin-bottom: 24px; margin-top: 10px; }
+    
+    /* BOLD HEADING WITH CYAN HIGHLIGHT */
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #00f0ff;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.6), 0 0 30px rgba(0, 240, 255, 0.2);
+      animation: glowPulse 3.5s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%, 100% { text-shadow: 0 0 12px rgba(0, 240, 255, 0.5); }
+      50% { text-shadow: 0 0 22px rgba(0, 240, 255, 0.85), 0 0 6px rgba(255,255,255,0.6); }
+    }
+    .header p { font-size: 0.85rem; color: #8f98b8; }
+
+    .card {
+      background: rgba(16, 18, 30, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 240, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -50%; left: -60%;
+      width: 40%; height: 200%;
+      background: linear-gradient(115deg, transparent, rgba(0,240,255,0.06), transparent);
+      transform: rotate(8deg);
+      animation: cardSheen 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes cardSheen {
+      0%, 100% { left: -60%; }
+      50% { left: 130%; }
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+      opacity: 0;
+      animation: fieldIn 0.6s ease forwards;
+    }
+    .form-group:nth-of-type(1) { animation-delay: 0.25s; }
+    .form-group:nth-of-type(2) { animation-delay: 0.4s; }
+    @keyframes fieldIn { to { opacity: 1; } }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+      color: #00f0ff;
+      letter-spacing: 0.5px;
+    }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    input {
+      width: 100%;
+      padding: 12px 40px 12px 14px;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 10px;
+      background: rgba(5, 7, 15, 0.6);
+      color: #ffffff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    input::placeholder { color: #525a75; }
+    input:focus { border-color: #00f0ff; box-shadow: 0 0 12px rgba(0, 240, 255, 0.4); }
+
+    input.shake { animation: shakeField 0.4s ease; border-color: #ff007f; }
+    @keyframes shakeField {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(3px); }
+    }
+
+    .valid-check {
+      position: absolute;
+      right: 12px;
+      color: #00ff88;
+      font-size: 1.1rem;
+      font-weight: bold;
+      display: none;
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+      transform: scale(0);
+    }
+    .valid-check.pop {
+      display: inline;
+      animation: popCheck 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes popCheck { to { transform: scale(1); } }
+
+    .hint { font-size: 0.75rem; color: #727b9a; margin-top: 6px; }
+
+    .mode-toggle {
+      display: flex;
+      gap: 6px;
+      background: rgba(5, 7, 15, 0.6);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 18px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: #8f98b8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    
+    /* UPDATED ACCENT BUTTON COLOR */
+    .mode-btn.active {
+      background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(0, 198, 255, 0.5);
+    }
+
+    .file-note-box {
+      background: rgba(0, 240, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.83rem;
+      line-height: 1.5;
+      color: #c7ccdd;
+    }
+
+    .drive-warning {
+      display: none;
+      background: rgba(255, 170, 0, 0.12);
+      border: 1px solid rgba(255, 170, 0, 0.4);
+      color: #ffca28;
+      font-size: 0.78rem;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      line-height: 1.3;
+      overflow: hidden;
+    }
+    .drive-warning.show {
+      display: block;
+      animation: warnOpen 0.35s ease;
+    }
+    @keyframes warnOpen {
+      from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+      to { max-height: 80px; opacity: 1; }
+    }
+
+    .status-box {
+      display: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 15px;
+    }
+    .status-box.show { display: block; animation: riseIn 0.4s ease forwards; }
+    .status-success {
+      background: rgba(0, 255, 136, 0.15);
+      border: 1px solid #00ff88;
+      color: #00ff88;
+      text-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+    }
+    .status-error {
+      background: rgba(255, 0, 127, 0.15);
+      border: 1px solid #ff007f;
+      color: #ff66b2;
+      animation: shakeField 0.4s ease;
+    }
+
+    .footer {
+      width: 100%;
+      max-width: 480px;
+      margin: 20px auto 10px auto;
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      animation: riseIn 0.7s cubic-bezier(.2,.8,.2,1) 0.5s forwards;
+    }
+    
+    /* SUBMIT BUTTON WITH GLOW GRADIENT */
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 22px rgba(0, 198, 255, 0.45);
+      transition: transform 0.1s ease, opacity 0.2s ease, box-shadow 0.3s ease;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-submit::after {
+      content: "";
+      position: absolute;
+      top: 0; left: -75%;
+      width: 50%; height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,0.35), transparent);
+      transform: skewX(-20deg);
+      animation: btnShine 3.2s ease-in-out infinite;
+    }
+    @keyframes btnShine {
+      0% { left: -75%; }
+      45%, 100% { left: 130%; }
+    }
+    .btn-submit:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-submit:disabled { cursor: default; opacity: 0.85; }
+    .btn-submit:disabled::after { animation: none; display: none; }
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .spinner.show { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Canvas overlay for 3D Stats Network */
+    #stats3dCanvas {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="stats3dCanvas"></canvas>
+  <canvas id="formulaCanvas"></canvas>
+  <canvas id="dataCanvas"></canvas>
+  <div class="cyber-grid"></div>
+  <div class="bg-orb orb-cyan"></div>
+  <div class="bg-orb orb-pink"></div>
+
+  <!-- Data hub -->
+  <svg class="data-hub" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <line class="spoke" x1="200" y1="260" x2="350" y2="260" />
+    <line class="spoke flow" x1="200" y1="260" x2="306" y2="154" />
+    <line class="spoke" x1="200" y1="260" x2="200" y2="110" />
+    <line class="spoke flow" x1="200" y1="260" x2="94" y2="154" />
+    <line class="spoke" x1="200" y1="260" x2="50" y2="260" />
+    <line class="spoke" x1="200" y1="260" x2="94" y2="366" />
+    <line class="spoke flow" x1="200" y1="260" x2="200" y2="410" />
+    <line class="spoke" x1="200" y1="260" x2="306" y2="366" />
+
+    <circle class="hub-ring-pulse" cx="200" cy="260" r="52" />
+    <circle class="hub-ring-outer" cx="200" cy="260" r="60" />
+    <circle cx="200" cy="260" r="44" fill="rgba(16,18,30,0.85)" stroke="rgba(0,240,255,0.6)" stroke-width="1.5" />
+    <text class="hub-label" x="200" y="266" font-size="17" text-anchor="middle">DATA</text>
+
+    <g class="node" transform="translate(350,260)">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon"><path d="M-7,6 L-7,-2 M0,6 L0,-6 M7,6 L7,2" /></g>
+    </g>
+    <g class="node" transform="translate(306,154)" style="animation-delay:.3s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon pink"><circle r="7" fill="none" /><path d="M0,-7 L0,0 L5,3" /></g>
+    </g>
+    <g class="node" transform="translate(200,110)" style="animation-delay:.6s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon purple"><path d="M-6,1 L-2,-4 L2,0 L7,-6" /></g>
+    </g>
+    <g class="node" transform="translate(94,154)" style="animation-delay:.9s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon orange"><path d="M-6,3 Q-6,-3 -1,-3 Q0,-7 5,-5 Q9,-5 8,0 Q10,3 6,4 L-5,4 Q-7,4 -6,3 Z" /></g>
+    </g>
+    <g class="node" transform="translate(50,260)" style="animation-delay:1.2s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon"><path d="M-5,-4 L4,4 M-5,4 L4,-4" stroke-width="1.6" /><path d="M-5,-4 L4,4" /></g>
+    </g>
+    <g class="node" transform="translate(94,366)" style="animation-delay:1.5s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon pink"><path d="M-6,3 A6,6 0 1 1 6,3" fill="none" /><path d="M-8,3 L8,3 M-6,3 L-6,7 M6,3 L6,7" /></g>
+    </g>
+    <g class="node" transform="translate(200,410)" style="animation-delay:.4s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon purple"><circle r="6" /><path d="M0,-6 L0,-9 M0,6 L0,9 M-6,0 L-9,0 M6,0 L9,0" /></g>
+    </g>
+    <g class="node" transform="translate(306,366)" style="animation-delay:.8s">
+      <circle class="node-ring" r="20" />
+      <g class="node-icon orange"><path d="M-5,6 L-5,-2 Q-5,-6 0,-6 Q5,-6 5,-2 L5,6" /><path d="M-5,-2 Q0,2 5,-2" /></g>
+    </g>
+  </svg>
+
+  <!-- Donut chart accent -->
+  <svg class="donut-chart" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(0,240,255,0.15)" stroke-width="10" />
+    <circle class="ring" cx="50" cy="50" r="38" fill="none" stroke="#00f0ff" stroke-width="10"
+      stroke-dasharray="140 238" stroke-linecap="round" />
+    <circle class="ring" cx="50" cy="50" r="38" fill="none" stroke="#ff007f" stroke-width="10"
+      stroke-dasharray="60 238" stroke-dashoffset="-140" stroke-linecap="round" style="animation-delay:-1s" />
+  </svg>
+
+  <!-- Orange trend line -->
+  <svg class="trend-line" viewBox="0 0 400 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <polyline class="trend-path" points="0,45 40,25 80,40 120,15 160,32 200,10 240,36 280,20 320,42 360,18 400,34"
+      fill="none" stroke="#ff8a00" stroke-width="1.5" />
+  </svg>
+
+  <!-- Gauge meter accent -->
+  <svg class="gauge" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10,65 A50,50 0 0 1 110,65" fill="none" stroke="rgba(255,138,0,0.2)" stroke-width="8" stroke-linecap="round" />
+    <path d="M10,65 A50,50 0 0 1 95,25" fill="none" stroke="#ff8a00" stroke-width="8" stroke-linecap="round" />
+    <line class="gauge-needle" x1="60" y1="65" x2="60" y2="22" stroke="#ff8a00" stroke-width="2" />
+    <circle cx="60" cy="65" r="4" fill="#ff8a00" />
+  </svg>
+
+  <!-- Live frequency waveform -->
+  <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+
+  <!-- Concentric progress rings -->
+  <svg class="rings-chart" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <g class="spin-slow">
+      <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,240,255,0.15)" stroke-width="5" />
+      <circle class="arc" cx="50" cy="50" r="42" fill="none" stroke="#00f0ff" stroke-width="5"
+        stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="70" transform="rotate(-90 50 50)" />
+      <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(139,92,246,0.15)" stroke-width="5" />
+      <circle class="arc" cx="50" cy="50" r="30" fill="none" stroke="#8b5cf6" stroke-width="5"
+        stroke-linecap="round" stroke-dasharray="188" stroke-dashoffset="60" transform="rotate(-90 50 50)" />
+      <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,0,127,0.15)" stroke-width="5" />
+      <circle class="arc" cx="50" cy="50" r="18" fill="none" stroke="#ff007f" stroke-width="5"
+        stroke-dasharray="113" stroke-dashoffset="45" transform="rotate(-90 50 50)" />
+    </g>
+  </svg>
+
+  <!-- Gradient bar chart strip -->
+  <div class="bar-strip" id="barStrip"></div>
+
+  <!-- STATUS BADGES -->
+  <div class="stat-badge stat-1">SYSTEM_READY // <span>99.8%</span></div>
+  <div class="stat-badge stat-2">DATA_LINK // <span>SECURE_SSL</span></div>
+
+  <div class="container">
+    <div class="header">
+      <!-- BOLDED CYAN TITLE -->
+      <h1>Assignment Submission Portal</h1>
+      <p>Fill in your details below to submit your assignment link.</p>
+    </div>
+
+    <div class="card">
+      <div class="mode-toggle">
+        <button type="button" class="mode-btn active" id="modeBtnLink" onclick="setMode('link')">🔗 Drive Link</button>
+        <button type="button" class="mode-btn" id="modeBtnFile" onclick="setMode('file')">📄 PDF / Excel File</button>
+      </div>
+
+      <div class="form-group">
+        <label for="studentId">Student ID</label>
+        <div class="input-wrapper">
+          <input type="text" id="studentId" placeholder="UGR/XXXX/XX" autocomplete="off" oninput="validateIdInput()">
+          <span id="idCheck" class="valid-check">✓</span>
+        </div>
+        <div class="hint">Format: UGR/XXXX/XX</div>
+      </div>
+
+      <div class="form-group" id="linkFields">
+        <label for="driveUrl">Google Drive Link</label>
+        <div class="input-wrapper">
+          <input type="url" id="driveUrl" placeholder="https://drive.google.com/file/d/..." autocomplete="off" oninput="validateUrlInput()">
+          <span id="urlCheck" class="valid-check">✓</span>
+        </div>
+        <div id="driveWarning" class="drive-warning">
+          🔒 <strong>Important:</strong> Ensure file permissions are set to <em>"Anyone with the link can view"</em>.
+        </div>
+      </div>
+
+      <div class="form-group file-note" id="fileFields" style="display:none;">
+        <label for="assignmentFile">Assignment File</label>
+        <input type="file" id="assignmentFile" accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <div class="hint">Upload one PDF, XLS, or XLSX file (maximum 10 MB).</div>
+      </div>
+
+      <div id="statusBox" class="status-box"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="btn-submit" id="submitBtn" onclick="submitAssignment()">
+      <span id="btnLabel">Submit Assignment</span>
+      <span class="spinner" id="btnSpinner"></span>
+    </button>
+  </div>
+
+  <script>
+    const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+      expand: () => {},
+      sendData: (data) => console.log('[preview mode] tg.sendData:', data),
+      close: () => console.log('[preview mode] tg.close called')
+    };
+    tg.expand();
+
+    (function () {
+      const arcs = document.querySelectorAll('.rings-chart .arc');
+      arcs.forEach(arc => {
+        const target = arc.getAttribute('stroke-dashoffset');
+        const total = arc.getAttribute('stroke-dasharray');
+        arc.setAttribute('stroke-dashoffset', total);
+        requestAnimationFrame(() => {
+          setTimeout(() => arc.setAttribute('stroke-dashoffset', target), 300);
+        });
+      });
+    })();
+
+    (function () {
+      const canvas = document.getElementById('waveformCanvas');
+      const ctx = canvas.getContext('2d');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let step = 0;
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = 46;
+      }
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#00f0ff';
+        for (let x = 0; x < w; x += 3) {
+          const y = Math.sin((x + step) * 0.03) * 10 + Math.cos((x + step * 0.5) * 0.015) * 6 + h / 2;
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        step += 1.5;
+        if (!reduceMotion) requestAnimationFrame(draw);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      draw();
+    })();
+
+    (function () {
+      const strip = document.getElementById('barStrip');
+      const count = 28;
+      const from = [255, 0, 127];   // pink
+      const to = [0, 240, 255];     // cyan
+      for (let i = 0; i < count; i++) {
+        const t = i / (count - 1);
+        const r = Math.round(from[0] + (to[0] - from[0]) * t);
+        const g = Math.round(from[1] + (to[1] - from[1]) * t);
+        const b = Math.round(from[2] + (to[2] - from[2]) * t);
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.background = `rgb(${r},${g},${b})`;
+        const h1 = (0.2 + Math.random() * 0.5).toFixed(2);
+        const h2 = (0.4 + Math.random() * 0.6).toFixed(2);
+        bar.style.setProperty('--h1', h1);
+        bar.style.setProperty('--h2', h2);
+        bar.style.animationDuration = (1.8 + Math.random() * 2).toFixed(2) + 's';
+        bar.style.animationDelay = (Math.random() * 2).toFixed(2) + 's';
+        strip.appendChild(bar);
+      }
+    })();
+
+    (function () {
+      const canvas = document.getElementById('dataCanvas');
+      const ctx = canvas.getContext('2d');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let w, h, points;
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      function makePoints(n) {
+        const glyphs = ['0', '1', '.', 'x̄', 'σ', '∑'];
+        return Array.from({ length: n }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          speed: 0.15 + Math.random() * 0.3,
+          size: 8 + Math.random() * 6,
+          glyph: glyphs[Math.floor(Math.random() * glyphs.length)],
+          alpha: 0.08 + Math.random() * 0.12
+        }));
+      }
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        ctx.font = '10px monospace';
+        for (const p of points) {
+          ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha})`;
+          ctx.fillText(p.glyph, p.x, p.y);
+          p.y -= p.speed;
+          if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+        }
+        if (!reduceMotion) requestAnimationFrame(draw);
+      }
+      resize();
+      points = makePoints(w < 500 ? 16 : 26);
+      window.addEventListener('resize', () => { resize(); });
+      draw();
+    })();
+
+    function validateIdInput() {
+      let id = document.getElementById('studentId').value.trim().replace(/\s+/g, '').toUpperCase();
+      const check = document.getElementById('idCheck');
+      if (id.startsWith("UGR/") && id.length >= 8) {
+        check.classList.add('pop');
+      } else {
+        check.classList.remove('pop');
+      }
+    }
+
+    function validateUrlInput() {
+      const url = document.getElementById('driveUrl').value.trim().toLowerCase();
+      const check = document.getElementById('urlCheck');
+      const warning = document.getElementById('driveWarning');
+
+      if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
+        check.classList.add('pop');
+        warning.classList.add('show');
+      } else {
+        check.classList.remove('pop');
+        warning.classList.remove('show');
+      }
+    }
+
+    function shakeInput(el) {
+      el.classList.remove('shake');
+      void el.offsetWidth;
+      el.classList.add('shake');
+      setTimeout(() => el.classList.remove('shake'), 400);
+    }
+
+    let currentMode = 'link';
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('modeBtnLink').classList.toggle('active', mode === 'link');
+      document.getElementById('modeBtnFile').classList.toggle('active', mode === 'file');
+      document.getElementById('linkFields').style.display = mode === 'link' ? 'block' : 'none';
+      document.getElementById('fileFields').style.display = mode === 'file' ? 'block' : 'none';
+      document.getElementById('btnLabel').textContent =
+        mode === 'link' ? 'Submit Assignment' : 'Upload Assignment';
+      document.getElementById('statusBox').classList.remove('show');
+    }
+
+    function submitAssignment() {
+      const statusBox = document.getElementById('statusBox');
+      const btn = document.getElementById('submitBtn');
+      const btnLabel = document.getElementById('btnLabel');
+      const btnSpinner = document.getElementById('btnSpinner');
+      statusBox.classList.remove('show');
+
+      let studentId = document.getElementById('studentId').value.trim();
+      const idInput = document.getElementById('studentId');
+
+      if (!studentId) {
+        statusBox.className = "status-box status-error show";
+        statusBox.innerText = "Please enter your Student ID.";
+        shakeInput(idInput);
+        return;
+      }
+
+      studentId = studentId.replace(/\s+/g, '').toUpperCase();
+      if (!studentId.startsWith("UGR/")) {
+        statusBox.className = "status-box status-error show";
+        statusBox.innerText = "Student ID must start with UGR/ (e.g., UGR/6529/17).";
+        shakeInput(idInput);
+        return;
+      }
+
+      if (currentMode === 'link') {
+        const driveUrl = document.getElementById('driveUrl').value.trim();
+        const urlInput = document.getElementById('driveUrl');
+
+        if (!driveUrl) {
+          statusBox.className = "status-box status-error show";
+          statusBox.innerText = "Please paste your Google Drive link.";
+          shakeInput(urlInput);
+          return;
+        }
+        if (!driveUrl.toLowerCase().includes("drive.google.com") && !driveUrl.toLowerCase().includes("docs.google.com")) {
+          statusBox.className = "status-box status-error show";
+          statusBox.innerText = "Please provide a valid Google Drive link.";
+          shakeInput(urlInput);
+          return;
+        }
+
+        btn.disabled = true;
+        btnLabel.textContent = "Sending...";
+        btnSpinner.classList.add('show');
+
+        setTimeout(() => {
+          statusBox.className = "status-box status-success show";
+          statusBox.innerText = "✓ Link successfully sent!";
+          btnLabel.textContent = "Sent";
+
+          const payload = JSON.stringify({
+            mode: 'link',
+            student_id: studentId,
+            file_url: driveUrl
+          });
+
+          setTimeout(() => {
+            tg.sendData(payload);
+            tg.close();
+          }, 900);
+        }, 700);
+
+      } else {
+        const fileInput = document.getElementById('assignmentFile');
+        const file = fileInput.files[0];
+
+        if (!file) {
+          statusBox.className = "status-box status-error show";
+          statusBox.innerText = "Please choose your PDF or Excel file.";
+          shakeInput(fileInput);
+          return;
+        }
+
+        const allowedTypes = [
+          'application/pdf',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ];
+        const validExtension = /\\.(pdf|xls|xlsx)$/i.test(file.name);
+        if ((!allowedTypes.includes(file.type) && !validExtension) || file.size > 10 * 1024 * 1024) {
+          statusBox.className = "status-box status-error show";
+          statusBox.innerText = "Use one PDF, XLS, or XLSX file up to 10 MB.";
+          shakeInput(fileInput);
+          return;
+        }
+
+        btn.disabled = true;
+        btnLabel.textContent = "Uploading...";
+        btnSpinner.classList.add('show');
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('studentId', studentId);
+
+        fetch('/api/upload', { method: 'POST', body: formData })
+          .then(async response => {
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Upload failed.');
+            return result;
+          })
+          .then(result => {
+            statusBox.className = "status-box status-success show";
+            statusBox.innerText = "✓ File uploaded successfully!";
+            btnLabel.textContent = "Uploaded";
+
+            const payload = JSON.stringify({
+              mode: 'file',
+              student_id: studentId,
+              file_url: result.url,
+              filename: result.filename,
+              content_type: result.contentType,
+              size: result.size
+            });
+
+            setTimeout(() => {
+              tg.sendData(payload);
+              tg.close();
+            }, 900);
+          })
+          .catch(error => {
+            console.error('[v0] Upload failed:', error);
+            statusBox.className = "status-box status-error show";
+            statusBox.innerText = error.message || "Upload failed. Please try again.";
+            btn.disabled = false;
+            btnLabel.textContent = "Upload Assignment";
+            btnSpinner.classList.remove('show');
+          });
+      }
+    }
+  </script>
+
+  <!-- FLOATING STATISTICAL FORMULAS ENGINE -->
+  <script>
+  (function() {
+    const canvas = document.getElementById('formulaCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const statFormulas = [
+      "z = (x − μ) / σ",
+      "x̄ = Σxᵢ / n",
+      "σ² = Σ(xᵢ − μ)² / N",
+      "P(A|B) = P(A ∩ B) / P(B)",
+      "r = Σ(x − x̄)(y − ȳ) / √(Σ(x − x̄)² Σ(y − ȳ)²)",
+      "s = √[ Σ(xᵢ − x̄)² / (n − 1) ]",
+      "H₀ : μ = μ₀",
+      "χ² = Σ (O − E)² / E",
+      "f(x) = (1 / σ√(2π)) e^(-1/2 ((x-μ)/σ)²)",
+      "SE = s / √n",
+      "CI = x̄ ± z*(σ / √n)",
+      "P(X = k) = C(n, k) p^k (1−p)^(n−k)",
+      "Y = β₀ + β₁X + ε",
+      "E(X) = Σ x · P(x)",
+      "Φ(z) = ∫ e^(-t²/2) dt"
+    ];
+
+    let w, h;
+    let items = [];
+
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+
+    function createFormulas() {
+      items = [];
+      const count = w < 500 ? 12 : 22;
+      for (let i = 0; i < count; i++) {
+        items.push({
+          text: statFormulas[Math.floor(Math.random() * statFormulas.length)],
+          x: Math.random() * w,
+          y: Math.random() * h,
+          speed: 0.3 + Math.random() * 0.45,
+          fontSize: 13 + Math.floor(Math.random() * 9),
+          opacity: 0.15 + Math.random() * 0.35,
+          color: Math.random() > 0.4 ? "rgba(0, 240, 255," : "rgba(255, 0, 127,",
+          drift: (Math.random() - 0.5) * 0.3,
+          rot: (Math.random() - 0.5) * 0.15
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.rot);
+
+        ctx.font = `italic ${item.fontSize}px Georgia, "Times New Roman", serif`;
+        ctx.fillStyle = `${item.color} ${item.opacity})`;
+        ctx.shadowColor = item.color === "rgba(0, 240, 255," ? "#00f0ff" : "#ff007f";
+        ctx.shadowBlur = 8;
+
+        ctx.fillText(item.text, 0, 0);
+        ctx.restore();
+
+        item.y -= item.speed;
+        item.x += item.drift;
+
+        if (item.y < -30) {
+          item.y = h + 30;
+          item.x = Math.random() * w;
+          item.text = statFormulas[Math.floor(Math.random() * statFormulas.length)];
+        }
+      }
+
+      if (!reduceMotion) requestAnimationFrame(draw);
+    }
+
+    resize();
+    createFormulas();
+    window.addEventListener('resize', () => { resize(); createFormulas(); });
+    draw();
+  })();
+  </script>
+
+  <!-- 3D STATISTICAL NETWORK ENGINE -->
+  <script>
+  (function() {
+    const canvas = document.getElementById('stats3dCanvas');
+    if (!canvas || typeof THREE === 'undefined') return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 15;
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const nodeCount = 35;
+    const nodes = [];
+    const geometry = new THREE.SphereGeometry(0.12, 8, 8);
+    const cyanMaterial = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const pinkMaterial = new THREE.MeshBasicMaterial({ color: 0xff007f });
+
+    const networkGroup = new THREE.Group();
+
+    for (let i = 0; i < nodeCount; i++) {
+      const isPink = Math.random() > 0.65;
+      const mesh = new THREE.Mesh(geometry, isPink ? pinkMaterial : cyanMaterial);
+      
+      mesh.position.set(
+        (Math.random() - 0.5) * 22,
+        (Math.random() - 0.5) * 22,
+        (Math.random() - 0.5) * 12
+      );
+
+      mesh.userData = {
+        vx: (Math.random() - 0.5) * 0.012,
+        vy: (Math.random() - 0.5) * 0.012,
+        vz: (Math.random() - 0.5) * 0.008
+      };
+
+      nodes.push(mesh);
+      networkGroup.add(mesh);
+    }
+
+    const maxConnections = 120;
+    const linePositions = new Float32Array(maxConnections * 6);
+    const lineGeometry = new THREE.BufferGeometry();
+    lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.25
+    });
+
+    const lineMesh = new THREE.LineSegments(lineGeometry, lineMaterial);
+    networkGroup.add(lineMesh);
+    scene.add(networkGroup);
+
+    const wavePoints = 80;
+    const waveGeometry = new THREE.BufferGeometry();
+    const wavePositions = new Float32Array(wavePoints * 3);
+
+    for (let i = 0; i < wavePoints; i++) {
+      const x = (i / wavePoints) * 24 - 12;
+      wavePositions[i * 3] = x;
+      wavePositions[i * 3 + 1] = Math.exp(-Math.pow(x * 0.35, 2)) * 3 - 3;
+      wavePositions[i * 3 + 2] = -4;
+    }
+
+    waveGeometry.setAttribute('position', new THREE.BufferAttribute(wavePositions, 3));
+    const waveMaterial = new THREE.LineBasicMaterial({
+      color: 0xff007f,
+      transparent: true,
+      opacity: 0.4,
+      linewidth: 2
+    });
+    const waveLine = new THREE.Line(waveGeometry, waveMaterial);
+    scene.add(waveLine);
+
+    let mouseX = 0, mouseY = 0;
+    const card = document.querySelector('.card');
+    const container = document.querySelector('.container');
+    if (container) container.style.perspective = '1000px';
+
+    function handleMove(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      mouseX = (clientX / window.innerWidth) * 2 - 1;
+      mouseY = (clientY / window.innerHeight) * 2 - 1;
+
+      if (card && !reduceMotion) {
+        card.style.transform = `rotateX(${mouseY * -8}deg) rotateY(${mouseX * 8}deg) translateZ(8px)`;
+        card.style.transition = 'transform 0.1s ease-out';
+      }
+    }
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('touchmove', handleMove, { passive: true });
+
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsedTime = clock.getElapsedTime();
+
+      nodes.forEach(node => {
+        node.position.x += node.userData.vx;
+        node.position.y += node.userData.vy;
+        node.position.z += node.userData.vz;
+
+        if (Math.abs(node.position.x) > 11) node.userData.vx *= -1;
+        if (Math.abs(node.position.y) > 11) node.userData.vy *= -1;
+        if (Math.abs(node.position.z) > 6) node.userData.vz *= -1;
+      });
+
+      let lineIndex = 0;
+      const posArray = lineGeometry.attributes.position.array;
+
+      for (let i = 0; i < nodeCount; i++) {
+        for (let j = i + 1; j < nodeCount; j++) {
+          const dist = nodes[i].position.distanceTo(nodes[j].position);
+          if (dist < 4.8 && lineIndex < maxConnections) {
+            posArray[lineIndex * 6] = nodes[i].position.x;
+            posArray[lineIndex * 6 + 1] = nodes[i].position.y;
+            posArray[lineIndex * 6 + 2] = nodes[i].position.z;
+
+            posArray[lineIndex * 6 + 3] = nodes[j].position.x;
+            posArray[lineIndex * 6 + 4] = nodes[j].position.y;
+            posArray[lineIndex * 6 + 5] = nodes[j].position.z;
+            lineIndex++;
+          }
+        }
+      }
+
+      lineGeometry.attributes.position.needsUpdate = true;
+      lineGeometry.setDrawRange(0, lineIndex * 2);
+
+      const wavePos = waveGeometry.attributes.position.array;
+      for (let i = 0; i < wavePoints; i++) {
+        const x = wavePos[i * 3];
+        wavePos[i * 3 + 1] = Math.exp(-Math.pow(x * 0.35, 2)) * 3.5 - 3 + Math.sin(elapsedTime * 2 + x) * 0.25;
+      }
+      waveGeometry.attributes.position.needsUpdate = true;
+
+      if (!reduceMotion) {
+        networkGroup.rotation.y = mouseX * 0.25;
+        networkGroup.rotation.x = -mouseY * 0.25;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  })();
+  </script>
+</body>
+</html>
