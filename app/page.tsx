@@ -1,180 +1,143 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Link2, FileText, Lock, ShieldCheck } from "lucide-react";
 
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        ready: () => void;
-        sendData: (data: string) => void;
-        close: () => void;
-      };
-    };
-  }
-}
-
-export default function Page() {
-  const [mode, setMode] = useState<"link" | "file">("file");
+export default function SubmissionPortal() {
+  const [activeTab, setActiveTab] = useState<"drive" | "file">("drive");
   const [studentId, setStudentId] = useState("");
   const [driveUrl, setDriveUrl] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-    }
-  }, []);
+  const [file, setFile] = useState<File | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-
-    const formattedId = studentId.trim().toUpperCase();
-    if (!formattedId) {
-      setErrorMsg("Please enter a valid Student ID.");
-      return;
-    }
-
-    const tg = window.Telegram?.WebApp;
-
-    if (mode === "link") {
-      if (!driveUrl.trim()) {
-        setErrorMsg("Please enter a Google Drive link.");
-        return;
-      }
-
-      setIsSubmitting(true);
-      const payload = JSON.stringify({
-        mode: "link",
-        student_id: formattedId,
-        file_url: driveUrl.trim(),
-      });
-
-      if (tg) {
-        tg.sendData(payload);
-      } else {
-        alert("Submitted Link: " + payload);
-      }
-      return;
-    }
-
-    if (mode === "file") {
-      if (!selectedFile) {
-        setErrorMsg("Please select a PDF or Excel file to submit.");
-        return;
-      }
-
-      setIsSubmitting(true);
-      // Sends registration data to Telegram bot so user can upload directly in chat
-      const payload = JSON.stringify({
-        mode: "file",
-        student_id: formattedId,
-        filename: selectedFile.name,
-      });
-
-      if (tg) {
-        tg.sendData(payload);
-      } else {
-        alert("File registered for Student ID: " + formattedId + "\nNow attach the file in Telegram chat.");
-      }
-    }
+    // Handle form submission logic here
+    console.log({ activeTab, studentId, driveUrl, file });
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
-        <h1 className="text-2xl font-bold text-center text-cyan-400 mb-2">SUBMISSION PORTAL</h1>
-        <p className="text-xs text-slate-400 text-center mb-6">
-          Fill in your details below to submit your assignment.
-        </p>
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4">
+      {/* Top Status Bar */}
+      <div className="flex items-center gap-4 text-xs tracking-widest text-emerald-400 font-mono mb-6 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          DATA SYSTEM_READY
+        </span>
+        <span className="text-slate-600">//</span>
+        <span>99.8% DATA_LINK</span>
+        <span className="text-slate-600">//</span>
+        <span className="flex items-center gap-1">
+          <ShieldCheck className="w-3.5 h-3.5" /> SECURE_SSL
+        </span>
+      </div>
 
-        {/* Mode Selector */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
+      {/* Main Card */}
+      <div className="w-full max-w-lg bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8 backdrop-blur-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
+            ASSIGNMENT SUBMISSION PORTAL
+          </h1>
+          <p className="text-sm text-slate-400">
+            Fill in your details below to submit your assignment link.
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800/80 mb-6">
           <button
             type="button"
-            onClick={() => { setMode("link"); setErrorMsg(""); }}
-            className={`py-2 px-3 text-sm font-medium rounded-lg border transition ${
-              mode === "link"
-                ? "bg-cyan-600 border-cyan-500 text-white"
-                : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+            onClick={() => setActiveTab("drive")}
+            className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "drive"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
             }`}
           >
-            🔗 Drive Link
+            <Link2 className="w-4 h-4" />
+            Drive Link
           </button>
           <button
             type="button"
-            onClick={() => { setMode("file"); setErrorMsg(""); }}
-            className={`py-2 px-3 text-sm font-medium rounded-lg border transition ${
-              mode === "file"
-                ? "bg-cyan-600 border-cyan-500 text-white"
-                : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+            onClick={() => setActiveTab("file")}
+            className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "file"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
             }`}
           >
-            📄 PDF / Excel File
+            <FileText className="w-4 h-4" />
+            PDF / Excel File
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Student ID */}
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Student ID Field */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Student ID</label>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              Student ID
+            </label>
             <input
               type="text"
-              placeholder="e.g. UGR/1234/15"
+              required
+              placeholder="UGR/XXXX/XX"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
-              required
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-mono transition-all"
             />
+            <p className="text-[11px] text-slate-500 mt-1.5 font-mono">
+              Format: UGR/XXXX/XX
+            </p>
           </div>
 
-          {/* Drive Link Input */}
-          {mode === "link" && (
+          {/* Tab Content: Drive Link */}
+          {activeTab === "drive" && (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Google Drive URL</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                Google Drive Link
+              </label>
               <input
                 type="url"
-                placeholder="https://drive.google.com/..."
+                required
+                placeholder="https://drive.google.com/file/d/..."
                 value={driveUrl}
                 onChange={(e) => setDriveUrl(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
-                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all"
               />
             </div>
           )}
 
-          {/* File Input */}
-          {mode === "file" && (
+          {/* Tab Content: File Upload */}
+          {activeTab === "file" && (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Assignment File</label>
-              <input
-                type="file"
-                accept=".pdf,.xlsx,.xls"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-950 file:text-cyan-400 hover:file:bg-cyan-900"
-                required
-              />
-              <p className="text-[10px] text-slate-500 mt-1">Accepts PDF, XLS, or XLSX files (max 10 MB).</p>
-            </div>
-          )}
-
-          {/* Error Display */}
-          {errorMsg && (
-            <div className="p-3 bg-red-950/60 border border-red-800 text-red-300 text-xs rounded-lg text-center">
-              {errorMsg}
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                Upload File (PDF / Excel)
+              </label>
+              <div className="relative border-2 border-dashed border-slate-800 rounded-xl p-6 text-center hover:border-slate-700 transition-colors bg-slate-950/50">
+                <input
+                  type="file"
+                  required
+                  accept=".pdf,.xls,.xlsx"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <FileText className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                <p className="text-sm text-slate-300 font-medium">
+                  {file ? file.name : "Click or drag to upload file"}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Supports PDF, XLS, XLSX
+                </p>
+              </div>
             </div>
           )}
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold rounded-lg transition text-sm shadow-lg shadow-cyan-500/20"
+            className="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/20 transition-all text-sm flex items-center justify-center gap-2"
           >
-            {isSubmitting ? "Submitting..." : "Submit Assignment"}
+            Submit Assignment
           </button>
         </form>
       </div>
