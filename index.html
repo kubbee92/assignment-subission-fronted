@@ -959,8 +959,8 @@
       document.getElementById('statusBox').classList.remove('show');
     }
 
-    // FIX: Replace this placeholder string with the actual URL where your backend handles uploads
-    const UPLOAD_URL = "https://YOUR-SERVER.example.com/upload"; 
+    // Vercel serves this endpoint from api/upload.js.
+    const UPLOAD_URL = "/api/upload";
     const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
     function submitAssignment() {
@@ -1060,8 +1060,12 @@
         form.append('init_data', tg.initData || ''); // lets your server verify the Telegram user
 
         fetch(UPLOAD_URL, { method: 'POST', body: form })
-          .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); })
-          .then(() => {
+          .then(async res => {
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok || !result.file_url) throw new Error(result.error || 'Upload failed');
+            return result;
+          })
+          .then(result => {
             statusBox.className = "status-box status-success show";
             statusBox.innerText = "✓ File successfully uploaded!";
             btnLabel.textContent = "Sent";
@@ -1070,7 +1074,8 @@
             const payload = JSON.stringify({
               mode: 'file',
               student_id: studentId,
-              file_name: file.name
+              file_url: result.file_url,
+              filename: file.name
             });
             setTimeout(() => {
               tg.sendData(payload);
