@@ -18,7 +18,7 @@ export default async function handler(request, response) {
       return response.status(400).json({ error: 'No file was provided' })
     }
 
-    if (!/^IGR\/[A-Z0-9]+\/[A-Z0-9]+$/i.test(studentId)) {
+    if (!/^UGR\/[A-Z0-9]+\/[A-Z0-9]+$/i.test(studentId)) {
       return response.status(400).json({ error: 'Invalid student ID' })
     }
 
