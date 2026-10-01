@@ -983,7 +983,7 @@
       studentId = studentId.replace(/\s+/g, '').toUpperCase();
       if (!studentId.startsWith("UGR/")) {
         statusBox.className = "status-box status-error show";
-        statusBox.innerText = "Student ID must start with UGR/ (e.g., UGR/6529/17).";
+        statusBox.innerText = "Student ID must start with UGR/ (e.g., UGR/1234/17).";
         shakeInput(idInput);
         return;
       }
